@@ -29,8 +29,8 @@ jobs:
         profile: minimal
         override: true
 
-    - name: Compile
-      run: cargo test --no-run --locked
+    - name: Install
+      run: cargo install --path .
   extension:
     runs-on: ubuntu-latest
     steps:
