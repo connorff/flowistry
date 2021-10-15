@@ -6,11 +6,6 @@ import vscode from "vscode";
 import forward_slice from "../mock_data/forward_slice.json";
 
 suite("Extension Test Suite", () => {
-  const delay = (millis: number) =>
-    new Promise<void>((resolve) => {
-      setTimeout((_) => resolve(), millis);
-    });
-
   before(async () => {
     chai.use(deepEqualAnyOrder);
 
@@ -24,9 +19,6 @@ suite("Extension Test Suite", () => {
       startXPos,
       endXPos
     );
-
-    // Extensions commands aren't available for a couple seconds
-    await delay(5000);
   });
 
   describe("Forward slice", () => {
