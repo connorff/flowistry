@@ -8,7 +8,30 @@ on:
       - "v*"
 
 jobs:
-  build:
+  rust:
+    name: Rust
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly-2021-09-23
+        components: rust-src, rustc-dev, llvm-tools-preview
+        profile: minimal
+        override: true
+
+    - name: Compile
+      run: cargo test --no-run --locked
+  extension:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -18,7 +41,7 @@ jobs:
       - run: npm install && npm run build
         working-directory: ide
   test:
-    needs: build
+    needs: [rust, extension]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
