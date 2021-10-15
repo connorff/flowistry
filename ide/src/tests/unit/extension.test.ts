@@ -38,7 +38,7 @@ suite("Extension Test Suite", () => {
       );
       const expectedSelection = forward_slice;
 
-      assert.deepStrictEqual(expectedSelection, actualSelection);
+      assert.deepStrictEqual(actualSelection, expectedSelection);
     });
   });
 });
