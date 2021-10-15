@@ -9,7 +9,7 @@ on:
 
 jobs:
   rust:
-    name: Rust
+    name: Build and test
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -18,26 +18,18 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly-2021-09-23
           components: rust-src, rustc-dev, llvm-tools-preview
           profile: minimal
           override: true
-      
-      - name: Install
-        run: cargo install --path .
-
+      - run: cargo install --path .
       - run: npm install && npm run build
         working-directory: ide
-
       - run: npm ci
         working-directory: ide
-        
       - name: Run vscode tests
         run: xvfb-run -a npm test
         working-directory: ide
