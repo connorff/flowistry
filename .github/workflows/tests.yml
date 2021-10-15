@@ -29,11 +29,10 @@ jobs:
         profile: minimal
         override: true
 
+    - uses: Swatinem/rust-cache@v1
+
     - name: Install
       run: cargo install --path .
-
-    - name: run flowistry from CLI
-      run: cargo flowistry forward_slice
   extension:
     runs-on: ubuntu-latest
     steps:
