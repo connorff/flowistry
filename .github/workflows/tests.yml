@@ -8,7 +8,7 @@ on:
       - "v*"
 
 jobs:
-  rust:
+  test:
     name: Build and test
     runs-on: ${{ matrix.os }}
 
