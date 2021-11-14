@@ -93,7 +93,7 @@
     "pretest": "npm run tc && npm run build",
     "test": "node ./out/tests/runUnitTests.js",
     "pretest:install": "npm run pretest && extest get-vscode && extest get-chromedriver",
-    "test:install": "npm run pretest:install && node ./out/tests/install/index.js"
+    "test:install": "node ./out/tests/install/index.js"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.4.34",
