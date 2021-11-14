@@ -5,8 +5,6 @@ import { tester } from "./index";
 
 describe('Sample notifications tests', () => {
     before(async function() {
-        this.timeout(100000);
-
         await VSBrowser.instance.openResources(MOCK_PROJECT_DIRECTORY);
         await VSBrowser.instance.openResources(MOCK_PROJECT_FILES.forward_slice);
 
@@ -14,12 +12,12 @@ describe('Sample notifications tests', () => {
     });
 
     it('Displays notification', async function() {
-        this.timeout(20000);
+        this.timeout(50000);
 
-        // Wait for a notification to appear with a timeout of 20 seconds
+        // Wait for a notification to appear with a timeout of 50 seconds
         expect(await VSBrowser.instance.driver.wait(() => {
             return notificationExists('Flowistry has successfully installed!');
-        }, 20000));
+        }, 50000));
     });
 });
 
