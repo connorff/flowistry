@@ -91,7 +91,8 @@
     "watch": "node build.cjs -w",
     "tc": "tsc",
     "pretest": "npm run tc && npm run build",
-    "test": "node ./out/tests/runUnitTests.js"
+    "test": "node ./out/tests/runUnitTests.js",
+    "test:install": "npm run pretest && node ./out/tests/install/index.js"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.4.34",
