@@ -5,7 +5,7 @@ import { tester } from "./index";
 
 describe('Flowistry install tests', () => {
     before(async function() {
-        this.timeout(5000);
+        this.timeout(10000);
         
         await VSBrowser.instance.openResources(MOCK_PROJECT_DIRECTORY);
         await VSBrowser.instance.openResources(MOCK_PROJECT_FILES.forward_slice);
