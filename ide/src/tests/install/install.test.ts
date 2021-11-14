@@ -3,7 +3,7 @@ import { VSBrowser, Workbench, Notification } from "vscode-extension-tester";
 import { MOCK_PROJECT_FILES, MOCK_PROJECT_DIRECTORY } from '../unit/util/constants';
 import { tester } from "./index";
 
-describe('Sample notifications tests', () => {
+describe('Flowistry install tests', () => {
     before(async function() {
         await VSBrowser.instance.openResources(MOCK_PROJECT_DIRECTORY);
         await VSBrowser.instance.openResources(MOCK_PROJECT_FILES.forward_slice);
