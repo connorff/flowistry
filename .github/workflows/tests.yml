@@ -8,8 +8,26 @@ on:
       - "v*"
 
 jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - run: cargo install --path .
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flowistry-build
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+
   test:
-    name: Build and test
+    needs: build
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -18,8 +36,16 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
-      - run: cargo install --path .
+      - name: Retrieve Flowistry build
+        uses: actions/download-artifact@v2
+        with:
+          name: flowistry-build
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
       - run: cargo test
       - run: npm ci
         working-directory: ide
