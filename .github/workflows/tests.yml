@@ -23,7 +23,8 @@ jobs:
         with:
           name: flowistry-build
           path: |
-            ~/.cargo/bin/*flowistry*
+            ~/.cargo/bin/cargo-flowistry
+            ~/.cargo/bin/flowistry-driver
 
   test:
     needs: build
