@@ -44,12 +44,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: flowistry-build
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
       - run: cargo test
       - run: npm ci
         working-directory: ide
