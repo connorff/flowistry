@@ -23,11 +23,7 @@ jobs:
         with:
           name: flowistry-build
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+            ~/.cargo/bin/*flowistry*
 
   test:
     needs: build
@@ -45,11 +41,7 @@ jobs:
         with:
           name: flowistry-build
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+            ~/.cargo/bin/*flowistry*
       - run: ls -a ~
       - run: ls ~/.cargo/bin/
       - run: cargo flowistry forward_slice
