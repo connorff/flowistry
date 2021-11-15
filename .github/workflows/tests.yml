@@ -40,8 +40,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: flowistry-build
-          path: |
-            ~/.cargo/bin/*flowistry*
       - run: ls -a ~
       - run: ls ~/.cargo/bin/
       - run: cargo flowistry forward_slice
