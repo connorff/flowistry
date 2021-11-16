@@ -44,7 +44,6 @@ jobs:
       - run: cp -r ~/work/flowistry/flowistry/*flowistry*  ~/.cargo/bin/
       - run: chmod +x ~/.cargo/bin/*flowistry*
       - run: ls -l ~/.cargo/bin
-      - run: cargo flowistry forward_slice
       - run: cargo test
       - run: npm ci
         working-directory: ide
