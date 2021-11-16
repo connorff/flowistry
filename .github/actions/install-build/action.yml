@@ -8,5 +8,8 @@ runs:
       with:
         name: flowistry-build
     - run: cp -r ~/work/flowistry/flowistry/*flowistry*  ~/.cargo/bin/
+      shell: bash
     - run: chmod +x ~/.cargo/bin/*flowistry*
+      shell: bash
     - run: cargo flowistry -V
+      shell: bash
