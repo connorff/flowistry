@@ -59,13 +59,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Retrieve Flowistry build
-        uses: actions/download-artifact@v2
-        with:
-          name: flowistry-build
-      - run: cp -r ~/work/flowistry/flowistry/*flowistry*  ~/.cargo/bin/
-      - run: chmod +x ~/.cargo/bin/*flowistry*
-      - run: cargo flowistry -V
+      - run: build/install-build@v1
       - run: npm ci
         working-directory: ide
       - name: Run vscode tests
