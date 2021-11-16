@@ -65,7 +65,6 @@ jobs:
           name: flowistry-build
       - run: ls -l ~/.cargo/bin
       - run: cp -r ~/work/flowistry/flowistry/*flowistry*  ~/.cargo/bin/
-      - run: chmod +x ~/.cargo/bin/*flowistry*
       - run: ls -l ~/.cargo/bin
       - run: cargo flowistry -V
       - run: npm ci
