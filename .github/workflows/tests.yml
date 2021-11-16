@@ -46,7 +46,6 @@ jobs:
             ~/.cargo/bin/cargo-flowistry
       - run: ls -a ~
       - run: ls ~/.cargo/bin/
-      - run: ls -l ~/.cargo/bin/flowistry-driver
       - run: cargo flowistry forward_slice
       - run: cargo test
       - run: npm ci
