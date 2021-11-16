@@ -41,8 +41,10 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: flowistry-build
-      - run: ls ~/work/flowistry/flowistry
-      - run: ls ~/.cargo/bin/
+          path: |
+            ~/.cargo/bin/flowistry-driver
+            ~/.cargo/bin/cargo-flowistry
+      - run: chmod +x ~/.cargo/bin/*flowistry*
       - run: cargo flowistry forward_slice
       - run: cargo test
       - run: npm ci
