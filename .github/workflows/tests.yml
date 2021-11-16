@@ -26,7 +26,19 @@ jobs:
             ~/.cargo/bin/cargo-flowistry
             ~/.cargo/bin/flowistry-driver
 
-  test:
+  test-rust:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo test
+
+  test-vscode:
     needs: build
     runs-on: ${{ matrix.os }}
 
@@ -44,7 +56,6 @@ jobs:
       - run: cp -r ~/work/flowistry/flowistry/*flowistry*  ~/.cargo/bin/
       - run: chmod +x ~/.cargo/bin/*flowistry*
       - run: ls -l ~/.cargo/bin
-      - run: cargo test
       - run: npm ci
         working-directory: ide
       - name: Run vscode tests
