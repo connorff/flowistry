@@ -42,8 +42,8 @@ jobs:
         with:
           name: flowistry-build
           path: |
-            ~/.cargo/bin/cargo-flowistry
             ~/.cargo/bin/flowistry-driver
+            ~/.cargo/bin/cargo-flowistry
       - run: ls -a ~
       - run: ls ~/.cargo/bin/
       - run: ls -l ~/.cargo/bin/flowistry-driver
