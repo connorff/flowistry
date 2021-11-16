@@ -14,12 +14,12 @@ describe('Flowistry install tests', () => {
     });
 
     it('Displays notification', async function() {
-        this.timeout(100000);
+        this.timeout(150000);
 
-        // Wait for a notification to appear with a timeout of 50 seconds
+        // Wait for a notification to appear with a timeout of 150 seconds
         expect(await VSBrowser.instance.driver.wait(() => {
             return notificationExists('Flowistry has successfully installed!');
-        }, 100000));
+        }, 150000));
     });
 });
 
