@@ -18,13 +18,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: cargo install --path .
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2021-09-23
+          components: rust-src, rustc-dev, llvm-tools-preview
+          target: ${{ matrix.target }}
+          profile: minimal
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
       - uses: actions/upload-artifact@v2
         with:
           name: flowistry-build
           path: |
-            ~/.cargo/bin/cargo-flowistry
-            ~/.cargo/bin/flowistry-driver
+            target/release/cargo-flowistry*
+            target/release/flowistry-driver*
 
   test-rust:
     runs-on: ${{ matrix.os }}
@@ -53,6 +63,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: flowistry-build
+      - run: ls -l ~/.cargo/bin
       - run: cp -r ~/work/flowistry/flowistry/*flowistry*  ~/.cargo/bin/
       - run: chmod +x ~/.cargo/bin/*flowistry*
       - run: ls -l ~/.cargo/bin
