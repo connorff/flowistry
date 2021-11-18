@@ -85,10 +85,14 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
+      - name: Retrieve Flowistry build
+        uses: actions/download-artifact@v2
+        with:
+          name: flowistry-build
       - uses: actions/checkout@v2
       - run: npm ci
         working-directory: ide
-      - run: zip ${{ matrix.target }}.zip cargo-flowistry* flowistry-driver*
+      - run: zip ${{ matrix.os }}.zip cargo-flowistry* flowistry-driver*
       - run: export NODE_TLS_REJECT_UNAUTHORIZED=0
-      - run: xvfb-run -a npm run test -- install --zip=../${{ matrix.target }}.zip
+      - run: xvfb-run -a npm run test -- install --zip=../${{ matrix.os }}.zip
         working-directory: ide
