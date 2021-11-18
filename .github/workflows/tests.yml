@@ -78,6 +78,8 @@ jobs:
     name: Install from HEAD
     needs: build
     runs-on: ${{ matrix.os }}
+    env:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
 
     strategy:
       fail-fast: false
@@ -93,6 +95,5 @@ jobs:
       - run: npm ci
         working-directory: ide
       - run: zip ${{ matrix.os }}.zip cargo-flowistry* flowistry-driver*
-      - run: export NODE_TLS_REJECT_UNAUTHORIZED=0
       - run: xvfb-run -a npm run test -- install --zip=../${{ matrix.os }}.zip
         working-directory: ide
