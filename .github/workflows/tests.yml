@@ -92,6 +92,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: npm ci
         working-directory: ide
+      - run: ls -a
       - run: zip ${{ matrix.os }}.zip cargo-flowistry* flowistry-driver*
       - run: export NODE_TLS_REJECT_UNAUTHORIZED=0
       - run: xvfb-run -a npm run test -- install --zip=../${{ matrix.os }}.zip
