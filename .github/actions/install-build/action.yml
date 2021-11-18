@@ -8,7 +8,5 @@ runs:
       with:
         name: flowistry-build
         path: ~/.cargo/bin
-    - run: chmod +x ~/.cargo/bin/*flowistry*
-      shell: bash
     - run: cargo flowistry -V
       shell: bash
