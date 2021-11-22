@@ -19,3 +19,4 @@ runs:
         args: --release
     - run: zip ${{ inputs.target }}.zip cargo-flowistry* flowistry-driver*
       working-directory: target/release
+      shell: bash
