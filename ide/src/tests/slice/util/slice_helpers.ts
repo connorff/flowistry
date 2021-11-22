@@ -22,7 +22,7 @@ export const get_slice = async ({ test, file, direction, slice_on }: TestSlice):
     const start = doc.offsetAt(new vscode.Position(...slice_on[0]));
     const end = doc.offsetAt(new vscode.Position(...slice_on[1]));
     const slice_command = `${flowistry_cmd} ${direction}_slice ${file} ${start} ${end}`;
-    const command_opts = get_flowistry_opts(MOCK_PROJECT_DIRECTORY);
+    const command_opts = await get_flowistry_opts(MOCK_PROJECT_DIRECTORY);
 
     const output = await exec_notify(slice_command, test, command_opts);
 

@@ -198,8 +198,8 @@ export async function setup(
   );
 
   return async <T>(args: string) => {
-    let cmd = `${flowistry_cmd} ${args}`; // connor: flowistry_cmd
-    let flowisty_opts = get_flowistry_opts(workspace_root);
+    let cmd = `${flowistry_cmd} ${args}`;
+    let flowisty_opts = await get_flowistry_opts(workspace_root);
 
     let output;
     try {
