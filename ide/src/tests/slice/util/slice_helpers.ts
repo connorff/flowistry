@@ -89,7 +89,7 @@ const merge_ranges = (ranges: vscode.Range[]): vscode.Range[] => {
     const merged_ranges = [ranges[0]];
 
     ranges.slice(1).forEach((range) => {
-        const last_range = merged_ranges[merged_ranges.length - 1];
+        const last_range = _.last(merged_ranges)!;
         const intersection = last_range.intersection(range);
 
         // If the current and previous ranges have no overlap
