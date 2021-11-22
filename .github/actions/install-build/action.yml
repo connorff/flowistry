@@ -1,5 +1,5 @@
 name: 'Install Flowistry build artifacts'
-description: 'Downloads Flowistry build to cargo bin, adjusts permissions, and confirms install'
+description: 'Unzips Flowistry build to cargo bin and confirms install'
 inputs:
   target:
     required: true
