@@ -11,6 +11,8 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     env:
+      # The proxy server for install tests uses a self-signed certificate
+      # This allows requests to the proxy by disabling certificate validation
       NODE_TLS_REJECT_UNAUTHORIZED: 0
     strategy:
       fail-fast: false
