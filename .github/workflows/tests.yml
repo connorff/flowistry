@@ -38,5 +38,7 @@ jobs:
           command: test
       - run: npm ci
         working-directory: ide
-      - run: xvfb-run -a npm run test -- install --zip=../target/debug/${{ matrix.target }}.zip
+      - run: xvfb-run -a npm test -- install --zip=../target/debug/${{ matrix.target }}.zip
+        working-directory: ide
+      - run: xvfb-run -a npm test
         working-directory: ide
