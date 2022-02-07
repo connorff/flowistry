@@ -1,8 +1,10 @@
-use std::{cell::RefCell, hash::Hash, rc::Rc};
+use std::{cell::RefCell, hash::Hash, ops::Index, rc::Rc};
 
 use datafrog::{Iteration, Relation};
 use log::{debug, info};
-use rustc_borrowck::consumers::BodyWithBorrowckFacts;
+use rustc_borrowck::{
+  consumers::{BodyWithBorrowckFacts, RichLocation},
+};
 use rustc_data_structures::fx::{FxHashMap as HashMap, FxHashSet as HashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
@@ -12,6 +14,7 @@ use rustc_middle::{
   },
   ty::{RegionKind, RegionVid, TyCtxt, TyKind, TyS},
 };
+use rustc_mir_dataflow::move_paths::{MoveData, MoveError};
 
 use crate::{
   block_timer,
@@ -20,7 +23,8 @@ use crate::{
     impls::{NormalizedPlaces, PlaceDomain, PlaceIndex, PlaceSet},
     IndexMatrix, IndexSet, IndexSetIteratorExt, IndexedDomain, RefSet, ToIndex,
   },
-  mir::utils::{self, PlaceExt, PlaceRelation},
+  mir::{utils::{self, PlaceExt, PlaceRelation}, borrow_set::BorrowIndex},
+  mir::borrow_set::BorrowSet
 };
 
 #[derive(Default)]
@@ -510,6 +514,237 @@ impl Aliases<'tcx> {
       conflicts,
       place_domain,
     }
+  }
+
+  fn compute_loans_loc(
+    tcx: TyCtxt<'tcx>,
+    def_id: DefId,
+    body_with_facts: &'a BodyWithBorrowckFacts<'tcx>,
+    location: Location,
+  ) -> LoanMap<'tcx> {
+    let body = &body_with_facts.body;
+    let mut iteration = Iteration::new();
+
+    let subset = {
+      let mut subset = HashSet::default();
+
+      // subset('a, 'b) :- subset_base('a, 'b, _).
+      {
+        let subset_base = &body_with_facts.input_facts.subset_base;
+        subset.extend(subset_base.iter().copied().map(|(o1, o2, _)| (o1, o2)));
+      }
+
+      // subset('static, 'a).
+      {
+        let static_region = RegionVid::from_usize(0);
+        let static_outlives = subset
+          .iter()
+          .flat_map(|(o1, o2)| [o1, o2])
+          .map(|o| (static_region, *o))
+          .collect::<Vec<_>>();
+        subset.extend(static_outlives);
+      }
+
+      if is_extension_active(|mode| mode.pointer_mode == PointerMode::Conservative) {
+        // for all p1 : &'a T, p2: &'b T: subset('a, 'b).
+        let mut region_to_pointers: HashMap<_, Vec<_>> = HashMap::default();
+        for local in body.local_decls().indices() {
+          for (k, vs) in
+            Place::from_local(local, tcx).interior_pointers(tcx, body, def_id)
+          {
+            region_to_pointers.entry(k).or_default().extend(vs);
+          }
+        }
+
+        subset.extend(
+          generate_conservative_constraints(
+            tcx,
+            &body_with_facts.body,
+            &region_to_pointers,
+          )
+          .into_iter(),
+        );
+      }
+
+      Relation::from_iter(subset)
+    };
+
+    let contains = iteration.variable::<(RegionVid, OrderedPlace)>("contains");
+    let mut definite = HashMap::default();
+    let mk_tuple = |region: RegionVid, place: Place<'tcx>| -> (RegionVid, OrderedPlace) {
+      (region, OrderedPlace::new(place))
+    };
+
+    // For all e = &'a p in body: contains('a, p).
+    {
+      let mut gather_borrows = GatherBorrows::default();
+      gather_borrows.visit_body(&body_with_facts.body);
+
+      // gather borrows using BorrowSet from rust_borrowck
+      let param_env = tcx.param_env(def_id);
+      let (move_data, _): (MoveData<'tcx>, Vec<(Place<'tcx>, MoveError<'tcx>)>) =
+        match MoveData::gather_moves(&body_with_facts.body, tcx, param_env) {
+          Ok(move_data) => (move_data, Vec::new()),
+          Err((move_data, move_errors)) => (move_data, move_errors),
+        };
+      let borrow_set = BorrowSet::build(tcx, &body_with_facts.body, true, &move_data);
+
+      // compute polonius output
+      let _facts = polonius_engine::Output::compute(
+        &body_with_facts.input_facts,
+        polonius_engine::Algorithm::Compare,
+        true,
+      );
+
+      // get live borrows at location
+      let start_loc = body_with_facts.location_table.start_index(location);
+      let mid_loc = body_with_facts.location_table.mid_index(location);
+
+      let mut live_borrows: Vec<BorrowIndex> = vec![];
+      if let Some(start_loans) = _facts.loan_live_at.get(&start_loc) {
+        live_borrows.extend(start_loans.iter().map(|bi| BorrowIndex::from_usize(bi.index())));
+      }
+      if let Some(mid_loans) = _facts.loan_live_at.get(&mid_loc) {
+        live_borrows.extend(mid_loans.iter().map(|bi| BorrowIndex::from_usize(bi.index())));
+      }
+
+      let live_borrows = live_borrows.iter().map(|bi| borrow_set.index(*bi)).collect::<Vec<_>>();
+
+      // filter gather_borrows where borrow is in scope at location
+      gather_borrows.borrows = gather_borrows.borrows.into_iter().filter(|(region, ..)| {
+        live_borrows.iter().any(|bd| &bd.region == region)
+      }).collect::<Vec<_>>();
+
+      debug!("_facts.loan_live_at: {:?}", _facts.loan_live_at);
+      for (li, loans) in _facts.loan_live_at {
+        let loan_location = body_with_facts.location_table.to_location(li);
+
+        if !matches!(loan_location, RichLocation::Start(_location) | RichLocation::Mid(_location)) {
+          continue;
+        }
+
+        debug!(
+          "loans live at location: {:?}",
+          loan_location
+        );
+
+        for loan in loans {
+          let real_index = BorrowIndex::from_usize(loan.index());
+          debug!("  borrow_set: {:?}\n", borrow_set.index(real_index));
+        }
+      }
+
+      for (region, _, place) in gather_borrows.borrows {
+        contains.extend([mk_tuple(region, place)]);
+
+        let (ty, projection) = match place.refs_in_projection().last() {
+          Some((ptr, proj)) => (
+            ptr.ty(body.local_decls(), tcx).ty.peel_refs(),
+            proj.to_vec(),
+          ),
+          None => (
+            body.local_decls()[place.local].ty,
+            place.projection.to_vec(),
+          ),
+        };
+        definite.insert(region, (ty, projection));
+      }
+    }
+
+    // For all args p : &'a T where 'a is abstract: contains('a, *p).
+    {
+      let arg_ptrs = |arg: Local| {
+        let place = Place::from_local(arg, tcx);
+        place
+          .interior_pointers(tcx, body, def_id)
+          .into_iter()
+          .map(|(region, places)| {
+            places
+              .into_iter()
+              .map(move |(place, _)| mk_tuple(region, tcx.mk_place_deref(place)))
+          })
+          .flatten()
+      };
+      contains.extend(body.args_iter().map(arg_ptrs).flatten());
+    }
+
+    // reachable is the transitive closure of subset
+    let reachable = {
+      let mut iteration = Iteration::new();
+      let reachable = iteration.variable("reachable");
+      reachable.extend(subset.as_ref().iter().copied());
+      let reachable_rev = iteration.variable_indistinct("reachable_rev");
+      while iteration.changed() {
+        reachable_rev.from_map(&reachable, |&(o1, o2)| (o2, o1));
+        reachable.from_join(&reachable_rev, &reachable, |_, a, c| (*a, *c));
+      }
+      group_pairs(reachable.complete().iter().copied())
+    };
+
+    while iteration.changed() {
+      // Subset implies containment: p ∈ 'a ∧ 'a ⊆ 'b ⇒ p ∈ 'b
+      // i.e. contains('b, p) :- contains('a, p), subset('a, 'b).
+      //
+      // If 'a is from a borrow expression &'a proj[*p'], then we add proj to all inherited aliases.
+      // See interprocedural_field_independence for an example where this matters.
+      // But we only do this if:
+      //   * !subset('b, 'a) since otherwise projections would be added infinitely.
+      //   * if p' : &T, then p : T since otherwise proj[p] is not well-typed.
+      contains.from_join(&contains, &subset, |a, p, b| {
+        let is_reachable = reachable.get(b).map(|set| set.contains(a)).unwrap_or(false);
+        let p_ty = p.0.ty(body.local_decls(), tcx).ty;
+        let p_proj = match definite.get(b) {
+          Some((ty, proj)) if !is_reachable && TyS::same_type(ty, p_ty) => {
+            let mut full_proj = p.0.projection.to_vec();
+            full_proj.extend(proj);
+            Place::make(p.0.local, tcx.intern_place_elems(&full_proj), tcx)
+          }
+          _ => p.0,
+        };
+        mk_tuple(*b, p_proj)
+      });
+    }
+
+    group_pairs(
+      contains
+        .complete()
+        .iter()
+        .copied()
+        .map(|(region, place)| (region, place.0)),
+    )
+  }
+
+  pub fn build_loc(
+    tcx: TyCtxt<'tcx>,
+    def_id: DefId,
+    body_with_facts: &'a BodyWithBorrowckFacts<'tcx>,
+    location: Location,
+  ) -> Self {
+    block_timer!("aliases");
+    let body = &body_with_facts.body;
+
+    let loans = Self::compute_loans_loc(tcx, def_id, body_with_facts, location);
+    debug!("Loans: {:#?}", loans);
+
+    let mut all_places = Self::compute_all_places(tcx, body, def_id, &loans);
+
+    let normalized_places = Rc::new(RefCell::new(NormalizedPlaces::new(tcx, def_id)));
+    let all_aliases = all_places
+      .iter()
+      .map(|place| {
+        (
+          normalized_places.borrow_mut().normalize(*place),
+          Self::aliases_from_loans(*place, &loans, body, tcx),
+        )
+      })
+      .collect::<HashMap<_, _>>();
+    debug!("Aliases: {:#?}", all_aliases);
+
+    all_places.extend(all_aliases.values().map(|s| s.iter().copied()).flatten());
+
+    let place_domain = Rc::new(PlaceDomain::new(all_places, normalized_places));
+
+    Self::compute_conflicts(place_domain, body, all_aliases)
   }
 
   pub fn conflicts(

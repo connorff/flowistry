@@ -41,7 +41,7 @@ fn mir_borrowck<'tcx>(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> mir_borrowck<'tc
   );
 
   let body = &mut body_with_facts.body;
-  SimplifyMir.run_pass(tcx, body);
+  // SimplifyMir.run_pass(tcx, body);
 
   // SAFETY: The reader casts the 'static lifetime to 'tcx before using it.
   let body_with_facts: BodyWithBorrowckFacts<'static> =
