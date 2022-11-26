@@ -9,7 +9,7 @@ const flowistryCommandsExist = async () => {
 };
 
 suite("Flowistry installation tests", () => {
-    const timeout = 50 * 1000;
+    const timeout = 100 * 1000;
 
     test("installs Flowistry", async () => {
         const interval = 1 * 1000;
